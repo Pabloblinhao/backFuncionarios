@@ -1,19 +1,19 @@
 <?php
-// services/CargoService.php
-
 require_once __DIR__ . '/../config/db.php';
-require_once __DIR__ . '/../models/Cargo.php';
 
 class CargoService {
+    private $conn;
+
+    public function __construct() {
+        $this->conn = Database::getConnection();
+    }
 
     public function listarCargos() {
-        global $pdo;
-
-        $stmt = $pdo->prepare("SELECT * FROM cargos");
+        $stmt = $this->conn->prepare("SELECT * FROM cargos");
         $stmt->execute();
 
-        $cargos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        return json_encode($cargos);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
+
 ?>

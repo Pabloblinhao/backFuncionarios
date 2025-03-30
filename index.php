@@ -4,46 +4,56 @@
 require_once __DIR__ . '/controllers/FuncionarioController.php';
 require_once __DIR__ . '/controllers/CargoController.php';
 
+// Definir cabeçalhos HTTP corretamente
 header('Content-Type: application/json');
+header("Access-Control-Allow-Origin: http://localhost:5173");
+header("Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 
-// Adicionar cabeçalhos CORS para permitir acesso do frontend
-header("Access-Control-Allow-Origin: http://localhost:5173"); // URL do frontend
-header("Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS"); // Métodos permitidos
-header("Access-Control-Allow-Headers: Content-Type"); // Cabeçalhos permitidos
-
-// Tratar o método OPTIONS
+// Tratar requisições OPTIONS para CORS
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit(0); // Interrompe a execução do script para o CORS
+    http_response_code(200);
+    exit();
 }
 
 // Definir as rotas
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
+    $controller = null;
+
     if ($_GET['action'] == 'listarFuncionarios') {
         $controller = new FuncionarioController();
-        echo $controller->listarFuncionarios();
+        $dados = $controller->listarFuncionarios();
     } elseif ($_GET['action'] == 'listarCargos') {
         $controller = new CargoController();
-        echo $controller->listarCargos();
+        $dados = $controller->listarCargos();
+    }
+
+    if ($controller) {
+        echo json_encode($dados);
+    } else {
+        http_response_code(404);
+        echo json_encode(["error" => "Rota não encontrada"]);
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
+    $data = json_decode(file_get_contents("php://input"), true);
+
     if ($_GET['action'] == 'criarFuncionario') {
-        $nome = $_POST['nome'];
-        $email = $_POST['email'];
-        $cargo_id = $_POST['cargo_id'];
-
         $controller = new FuncionarioController();
-        echo $controller->criarFuncionario($nome, $email, $cargo_id);
+        $dados = $controller->criarFuncionario($data);
+        echo json_encode($dados);
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
-    if ($_GET['action'] == 'deletarFuncionario') {
-        $id = $_GET['id'];
-
+if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && isset($_GET['action'])) {
+    if ($_GET['action'] == 'deletarFuncionario' && isset($_GET['id'])) {
         $controller = new FuncionarioController();
-        echo $controller->deletarFuncionario($id);
+        $dados = $controller->deletarFuncionario($_GET['id']);
+        echo json_encode($dados);
+    } else {
+        http_response_code(400);
+        echo json_encode(["error" => "ID necessário para deletar funcionário"]);
     }
 }
 ?>
